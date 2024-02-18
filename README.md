@@ -1,12 +1,6 @@
 # sprint2final_proj
 
 
-final spring2_proj 
-1) Скачиваем проект и раз архивируем 
-2) Заходим в orch и делаем go build и запускаем Linux/MacOs ./orch, Windows orch.exe
-3) Заходим в calc и делаем go build и запускаем Linux/MacOs ./calc, Windows calc.exe
-
-
 
 Возможные функции:
 curl http://localhost:8090/add_expression  //добавить пример
