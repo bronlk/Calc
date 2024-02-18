@@ -3,18 +3,21 @@
 Скомпилируйте проект - зайдите в orch и напишите go build, Linux/MacOs: ./orch, Widnows: orch.exe
                        зайдите в calc и напишите go build, Linux/MacOs: ./calc, Widnows: calc.exe
 
-Запустите bash файл status который будет показывать состояние агентов - bash status
+Запустите bash файл status который будет показывать состояние агентов и статус вычисления выражения- bash status
 
  Попробуйте следующие функции
 
 
 Возможные функции:
-curl -X POST http://localhost:8090/add_expression -d "4+5" //добавить пример
+curl -X POST http://localhost:8090/add_expression -d "1+3" //добавить пример
 
-curl http://localhost:8090/get_expression  //передать пример для калькулятора
+curl -X POST http://localhost:8090/get_expression  //вызов калькулятора
 
-curl http://localhost:8090/set_expression_result  //вывести ответ
+curl -X POST http://localhost:8090/set_expression_result  //вывести ответ
 
-curl http://localhost:8090/list_agents //выводит все работующие агенты
+curl -X POST http://localhost:8090/list_agents //выводит все работующие агенты
 
-curl http://localhost:8090/list_expressions //выводит все примеры
+curl -X POST http://localhost:8090/list_expressions //выводит все примеры
+
+Ограничения:
+Калькулятор не умеет вычислять сложные выражения больше 2х чисел
