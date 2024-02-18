@@ -1,5 +1,8 @@
 # sprint2final_proj
 
+Скампилируйте проект - зайдите в orch и напишите go build, Linux/MacOs: ./orch, Widnows: orch.exe
+                       зайдите в calc и напишите go build, Linux/MacOs: ./calc, Widnows: calc.exe
+
  Попробуйте следующие функции
 
 
