@@ -1,3 +1,5 @@
+Мой дискорд - bron.lk пишите если будут проблемы
+
 # sprint2final_proj
 
 Скомпилируйте проект - зайдите в orch и напишите go build, Linux/MacOs: ./orch, Widnows: orch.exe
