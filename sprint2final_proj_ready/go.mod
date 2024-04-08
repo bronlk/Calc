@@ -2,14 +2,12 @@ module calc
 
 go 1.22.0
 
-require (
-	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/websocket v1.5.1
-)
+require github.com/gorilla/mux v1.8.1
 
 require (
-	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3 // indirect
-	github.com/google/uuid v1.6.0 // indirect
-	github.com/zeroflucs-given/generics v0.0.0-20240115220256-e22381f06d88 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/laurent22/go-sqlkv v0.0.0-20140919090402-db1022af2c66
+	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/zeroflucs-given/generics v0.0.0-20240115220256-e22381f06d88
+	golang.org/x/crypto v0.21.0
 )
