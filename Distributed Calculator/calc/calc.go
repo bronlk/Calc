@@ -71,7 +71,7 @@ func (ea *ExpressionAgent) mainLoop() {
 	defer ea.wg.Done()
 	for ea.working {
 
-		resp, err := ea.client.Post("http://localhost:8090/get_expression", "application/json", bytes.NewBuffer([]byte(ea.clientId)))
+		resp, err := ea.client.Post("http://localhost:8080/get_expression", "application/json", bytes.NewBuffer([]byte(ea.clientId)))
 
 		if err != nil {
 			time.Sleep(30 * time.Millisecond)
@@ -164,7 +164,7 @@ func doCalc(id string, exp Expression, httpCl *http.Client) {
 	exp.Status = id
 	expBytes, _ := json.Marshal(exp)
 
-	httpCl.Post("http://localhost:8090/set_expression_result", "application/json", bytes.NewBuffer(expBytes))
+	httpCl.Post("http://localhost:8080/set_expression_result", "application/json", bytes.NewBuffer(expBytes))
 }
 
 func main() {
@@ -173,7 +173,7 @@ func main() {
 
 	fmt.Println("Starting calc name:" + name)
 
-	var agent *ExpressionAgent = NewExpressionAgent("http://localhost:8090", name)
+	var agent *ExpressionAgent = NewExpressionAgent("http://localhost:8080", name)
 	agent.Start()
 
 	fmt.Printf("Press Enter to stop")
