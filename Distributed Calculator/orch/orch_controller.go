@@ -15,7 +15,8 @@ type OrchController struct {
 }
 
 type ExpressionRequest struct {
-	Expression string
+	expression string
+	caldId     string
 }
 
 func NewOrchestatorController(orch *Orchestrator) *OrchController {
@@ -35,14 +36,38 @@ func (OrchController *OrchController) AddExpressionByApi(w http.ResponseWriter, 
 		return
 	}
 
-	err = orch.addExpression(request.Expression)
+	OrchController.orch.SaveToDatabase(request.expression)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Expression saved successfully"))
+}
+func (OrchController *OrchController) GetExpressionByApi(w http.ResponseWriter, r *http.Request) {
+
+	var request ExpressionRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		http.Error(w, "Failed to save login data", http.StatusInternalServerError)
+		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
+	OrchController.orch.GetExpression(request.caldId)
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Registration credentials saved successfully"))
+	w.Write([]byte("Your expression:"))
+}
+
+func (OrchController *OrchController) PrintExpressionByApi(w http.ResponseWriter, r *http.Request) {
+
+	var request ExpressionRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	OrchController.orch.PrintExpressions()
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // func (userController *UserController) LoginApiRequest(w http.ResponseWriter, r *http.Request) {

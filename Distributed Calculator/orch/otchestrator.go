@@ -34,12 +34,9 @@ func NewOrchestrator(orchRepo *OrchRepository) *Orchestrator {
 	}
 }
 
-func (orch *Orchestrator) SaveToDatabase(expressionText string) {
-	err := orch.SaveExpression(expressionText)
-	if err != nil {
-		fmt.Printf("Failed to save")
-		return
-	}
+func (orch *Orchestrator) SaveToDatabase(expression string) {
+	orch.SaveExpression(expression)
+
 	fmt.Print("Saved successfully")
 }
 
@@ -57,10 +54,10 @@ func (orch *Orchestrator) SetResult(exp Expression) string {
 	return err
 }
 
-func (orch *Orchestrator) Add(expressionText string) string {
-	err := orch.AddExpression(expressionText)
-	return err
-}
+// func (orch *Orchestrator) Add(expressionText string) string {
+// 	err := orch.AddExpression(expressionText)
+// 	return err
+// }
 
 func (orch *Orchestrator) Expressions() []Expression {
 	err := orch.PrintExpressions()

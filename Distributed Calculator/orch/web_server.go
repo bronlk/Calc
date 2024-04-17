@@ -35,7 +35,7 @@ func (o *WebServer) Stop() {
 	//сохраняем в файл все что есть
 }
 
-func NewWebServer(address string, userController *UserController, orch *Orchestrator, o *OrchServer) *WebServer {
+func NewWebServer(address string, userController *UserController, orchController *OrchController) *WebServer {
 
 	mainCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
@@ -54,9 +54,9 @@ func NewWebServer(address string, userController *UserController, orch *Orchestr
 	rt.HandleFunc("/logout", userController.LogoutApiRequest)
 	//rt.HandleFunc("/list_agents", orchServer.listAgents)
 	//rt.HandleFunc("/list_calc", orchServer.list)
-	rt.HandleFunc("/save_expression", o.addExpression)
-	rt.HandleFunc("/get_exoression", o.getExpression)
-	rt.HandleFunc("/list_exoression", o.listExpressions)
+	rt.HandleFunc("/save_expression", orchController.AddExpressionByApi)
+	rt.HandleFunc("/get_exoression", orchController.GetExpressionByApi)
+	rt.HandleFunc("/list_exoression", orchController.PrintExpressionByApi)
 
 	return orchServer
 }

@@ -2,13 +2,10 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net"
+	"log"
 	"net/http" // Путь к вашим структурам
-
-	"github.com/gorilla/mux"
+	"time"
 )
 
 type OrchRepository struct {
@@ -23,69 +20,111 @@ func NewOrchRepository(fileName string) *OrchRepository {
 	return &OrchRepository{fileName: fileName}
 }
 
-func (o *OrchRepository) Start() {
-
-	//TODO зачитываем из файла все что сохранили
-	var err = o.httpServer.ListenAndServe()
+func InitOrchDB(fileName string) error {
+	db, err := openDbConnection(fileName)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
+	defer db.Close()
+	expressions := `
+	CREATE TABLE IF NOT EXISTS expressions (
+		id TEXT PRIMARY KEY UNIQUE,
+		expression TEXT,
+		result TEXT,
+		status TEXT
+	);
+`
+
+	db.Exec(expressions)
+	return nil
 }
 
-func (o *OrchRepository) Stop() {
-	o.httpServer.Shutdown(o.ctx)
-	//сохраняем в файл все что есть
-}
+// func (orch *Orchestrator) SaveExpression(string) error {
+// 	db, _ := openDbConnection("../sqlite_db/sqlite.db")
+// 	defer db.Close()
+// 	exp := orch.Expressions()
+// 	_, err := db.Exec("INSERT INTO expressions (id, expression, result, status) VALUES (?, ?, ?, ?)", exp.Id, exp.Expression, exp.Result, exp.Status)
+// 	if err != nil {
+// 		return err
+// 	}
 
-func (o *OrchRepository) addExpression(w http.ResponseWriter, r *http.Request) {
+// 	return nil
+// }
 
-	o.orch.SaveToDatabase(expressionText)
-	return
-}
-
-// служит одновременно и пингом, каждые 10 миллсеккунд .
-func (o *OrchRepository) getExpression(w http.ResponseWriter, r *http.Request) {
-	b, _ := io.ReadAll(r.Body)
-	calcId := string(b)
-
-	o.orch.GetExpression(calcId)
-	return
-}
-
-func (o *OrchRepository) setExpressionResult(w http.ResponseWriter, r *http.Request) {
-
-	var exp Expression
-	err := json.NewDecoder(r.Body).Decode(&exp)
+func (orch *Orchestrator) SaveExpression(expression string) string {
+	db, err := openDbConnection(orch.orchRepo.fileName)
+	defer db.Close()
+	var exp *Expression
+	err = orch.db.QueryRow("INSERT INTO expressions(expression, result, status) VALUES(?, '', 'New') RETURNING id", expression).Scan(&exp.Id)
 	if err != nil {
-		http.Error(w, "Failed to decode JSON", http.StatusBadRequest)
-		return
+		fmt.Println("Error inserting new expression into database:", err)
+		return ""
 	}
-	o.orch.SetResult(exp)
-	return
+
+	_, err = orch.db.Exec("UPDATE agents SET expr_id = ?, last_connect = ? WHERE name = ?", exp.Id, time.Now())
+	if err != nil {
+		fmt.Println("Error assigning expression to agent in database:", err)
+		return ""
+	}
+
+	return exp.Id
 }
 
-func (o *OrchRepository) listExpressions(w http.ResponseWriter, r *http.Request) {
-	o.orch.PrintExpressions()
-	return
+func (orch *Orchestrator) GetExpressionByAgent(calcId string) (bool, *Expression) {
+	var expr Expression
+	var agent CalcAgent
+
+	row := orch.db.QueryRow("SELECT expr_id, status FROM agents WHERE name = ?", calcId)
+	err := row.Scan(&agent.ExprId, &expr.Status)
+	if err != nil {
+		return false, nil
+	}
+
+	row = orch.db.QueryRow("SELECT id, expression, result FROM expressions WHERE id = ?", agent.ExprId)
+	err = row.Scan(&expr.Id, &expr.Expression, &expr.Result)
+	if err != nil {
+		return false, nil
+	}
+
+	_, err = orch.db.Exec("UPDATE expressions SET status = ? WHERE id = ?", "In calc:"+calcId, expr.Id)
+	if err != nil {
+		fmt.Println("Error updating expression status in database:", err)
+	}
+
+	_, err = orch.db.Exec("UPDATE agents SET last_connect = ? WHERE name = ?", time.Now(), calcId)
+	if err != nil {
+		fmt.Println("Error updating agent last connect time in database:", err)
+	}
+
+	return true, &expr
 }
 
-func NewServer(addr string, orch *Orchestrator) *OrchRepository {
-	mainCtx, stop := context.WithCancel(context.Background())
+func (orch *Orchestrator) SetResultByID(exp *Expression) string {
+	_, err := orch.db.Exec("UPDATE expressions SET result = ?, status = 'done' WHERE id = ?", exp.Result, exp.Id)
+	if err != nil {
+		fmt.Println("Error updating expression result in database:", err)
+	}
+	return "Result updated successfully"
+}
 
-	rt := mux.NewRouter()
-	http.Handle("/", rt)
+func (orch *Orchestrator) PrintExpressions() []Expression {
+	rows, err := orch.db.Query("SELECT id, expression, result, status FROM expressions")
+	if err != nil {
+		fmt.Println("Error fetching expressions from database:", err)
+		return nil
+	}
+	defer rows.Close()
 
-	server := &http.Server{Addr: addr, Handler: rt, BaseContext: func(_ net.Listener) context.Context {
-		return mainCtx
-	}}
+	var expressions []Expression
+	for rows.Next() {
+		var expr Expression
+		err := rows.Scan(&expr.Id, &expr.Expression, &expr.Result, &expr.Status)
+		if err != nil {
+			fmt.Println("Error scanning expression:", err)
+			continue
+		}
+		expressions = append(expressions, expr)
+	}
 
-	orchServer := &OrchRepository{httpServer: server, ctx: mainCtx, cancelFunc: stop, orch: orch}
-
-	rt.HandleFunc("/add_expression", orchServer.addExpression)
-	rt.HandleFunc("/get_expression", orchServer.getExpression)
-	rt.HandleFunc("/set_expression_result", orchServer.setExpressionResult)
-	rt.HandleFunc("/list_expressions", orchServer.listExpressions)
-	rt.HandleFunc("/list_agents", orchServer.listExpressions)
-
-	return orchServer
+	return expressions
 }
