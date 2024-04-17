@@ -345,3 +345,27 @@ package main
 // 	http.ListenAndServe(":8080", nil)
 // 	fmt.Print("server is running")
 // }
+
+// func TestServer(t *testing.T) *OrchServer {
+// 	var addr string
+// 	var orch *Orchestrator
+
+// 	mainCtx, stop := context.WithCancel(context.Background())
+
+// 	rt := mux.NewRouter()
+// 	http.Handle("/", rt)
+
+// 	server := &http.Server{Addr: addr, Handler: rt, BaseContext: func(_ net.Listener) context.Context {
+// 		return mainCtx
+// 	}}
+
+// 	orchServer := &OrchServer{httpServer: server, ctx: mainCtx, cancelFunc: stop, orch: orch}
+
+// 	rt.HandleFunc("/add_expression", orchServer.addExpression)
+// 	rt.HandleFunc("/get_expression", orchServer.getExpression)
+// 	rt.HandleFunc("/set_expression_result", orchServer.setExpressionResult)
+// 	rt.HandleFunc("/list_expressions", orchServer.listExpressions)
+// 	rt.HandleFunc("/list_agents", orchServer.listExpressions)
+
+// 	return orchServer
+// }

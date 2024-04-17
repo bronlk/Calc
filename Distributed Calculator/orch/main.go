@@ -2,13 +2,18 @@ package main
 
 func main() {
 
-	//var orch *Orchestrator = NewOrchestrator()
 	var databasePath = "../sqlite_db/sqlite.db"
 	InitDB(databasePath)
+
+	var orchRepo *OrchRepository = NewOrchRepository(databasePath)
+	var orch *Orchestrator = NewOrchestrator(orchRepo)
+	var OrchController *OrchController = NewOrchestatorController(orch)
+
 	var userRepo *UserRepository = NewUserRepository(databasePath)
 	var manager *UserManager = NewUserManager(userRepo)
 	var userController *UserController = NewUserController(manager)
-	var server *WebServer = NewWebServer(":8080", userController)
+
+	var server *WebServer = NewWebServer(":8080", userController, OrchController)
 	server.Start()
 	// var init *cUser
 
