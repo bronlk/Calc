@@ -27,15 +27,35 @@ func InitOrchDB(fileName string) error {
 	}
 	defer db.Close()
 	expressions := `
-	CREATE TABLE IF NOT EXISTS expressions (
-		id TEXT PRIMARY KEY UNIQUE,
-		expression TEXT,
-		result TEXT,
-		status TEXT
+	CREATE TABLE "expressions" (
+		"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+		"expression"	TEXT,
+		"result"	TEXT,
+		"status"	TEXT
 	);
 `
-
 	db.Exec(expressions)
+	return nil
+}
+
+func InitAgentsDB(fileName string) *OrchRepository {
+	db, err := openDbConnection(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	agents := `
+	CREATE TABLE IF NOT EXISTS agents (
+		expr_id TEXT PRIMARY KEY UNIQUE,
+		last_connect TEXT,
+		name TEXT
+	);
+`
+	_, err = db.Exec(agents)
+	if err != nil {
+		fmt.Print("error")
+	}
 	return nil
 }
 
@@ -51,47 +71,50 @@ func InitOrchDB(fileName string) error {
 // 	return nil
 // }
 
-func (orch *Orchestrator) SaveExpression(expression string) string {
-	db, err := openDbConnection(orch.orchRepo.fileName)
+func (orchRepo *OrchRepository) SaveExpression(expression string) string {
+	db, err := openDbConnection(orchRepo.fileName)
 	defer db.Close()
-	var exp *Expression
-	err = orch.db.QueryRow("INSERT INTO expressions(expression, result, status) VALUES(?, '', 'New') RETURNING id", expression).Scan(&exp.Id)
+	//	var exp *Expression
+	_, err = db.Exec("INSERT INTO expressions(expression, result, status) VALUES(?, '', 'New')", expression)
 	if err != nil {
 		fmt.Println("Error inserting new expression into database:", err)
 		return ""
 	}
 
-	_, err = orch.db.Exec("UPDATE agents SET expr_id = ?, last_connect = ? WHERE name = ?", exp.Id, time.Now())
-	if err != nil {
-		fmt.Println("Error assigning expression to agent in database:", err)
-		return ""
-	}
-
-	return exp.Id
+	// _, err = db.Exec("INSERT INTO agents (expr_id, last_connect, name) VALUES (?, ?, ?)", exp.Id, time.Now(), "")
+	// if err != nil {
+	// 	fmt.Println("Error assigning expression to agent in database:", err)
+	// 	return ""
+	// }
+	db.Close()
+	return ""
 }
 
-func (orch *Orchestrator) GetExpressionByAgent(calcId string) (bool, *Expression) {
+func (orchRepo *OrchRepository) GetExpressionByAgent(calcId string) (bool, *Expression) {
 	var expr Expression
 	var agent CalcAgent
 
-	row := orch.db.QueryRow("SELECT expr_id, status FROM agents WHERE name = ?", calcId)
-	err := row.Scan(&agent.ExprId, &expr.Status)
+	db, err := openDbConnection(orchRepo.fileName)
+	defer db.Close()
+
+	row := db.QueryRow("SELECT expr_id, status FROM agents WHERE name = ?", calcId)
+	//err := row.Scan(&agent.ExprId, &expr.Status)
 	if err != nil {
 		return false, nil
 	}
 
-	row = orch.db.QueryRow("SELECT id, expression, result FROM expressions WHERE id = ?", agent.ExprId)
+	row = db.QueryRow("SELECT id, expression, result FROM expressions WHERE id = ?", agent.ExprId)
 	err = row.Scan(&expr.Id, &expr.Expression, &expr.Result)
 	if err != nil {
 		return false, nil
 	}
 
-	_, err = orch.db.Exec("UPDATE expressions SET status = ? WHERE id = ?", "In calc:"+calcId, expr.Id)
+	_, err = db.Exec("UPDATE expressions SET status = ? WHERE id = ?", "In calc:"+calcId, expr.Id)
 	if err != nil {
 		fmt.Println("Error updating expression status in database:", err)
 	}
 
-	_, err = orch.db.Exec("UPDATE agents SET last_connect = ? WHERE name = ?", time.Now(), calcId)
+	_, err = db.Exec("UPDATE agents SET last_connect = ? WHERE name = ?", time.Now(), calcId)
 	if err != nil {
 		fmt.Println("Error updating agent last connect time in database:", err)
 	}

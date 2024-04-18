@@ -15,8 +15,8 @@ type OrchController struct {
 }
 
 type ExpressionRequest struct {
-	expression string
-	caldId     string
+	Expression string
+	CalcId     string
 }
 
 func NewOrchestatorController(orch *Orchestrator) *OrchController {
@@ -36,13 +36,12 @@ func (OrchController *OrchController) AddExpressionByApi(w http.ResponseWriter, 
 		return
 	}
 
-	OrchController.orch.SaveToDatabase(request.expression)
+	OrchController.orch.SaveToDatabase(request.Expression)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Expression saved successfully"))
 }
-func (OrchController *OrchController) GetExpressionByApi(w http.ResponseWriter, r *http.Request) {
-
+func (orchController *OrchController) GetExpressionByApi(w http.ResponseWriter, r *http.Request) {
 	var request ExpressionRequest
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
@@ -50,13 +49,18 @@ func (OrchController *OrchController) GetExpressionByApi(w http.ResponseWriter, 
 		return
 	}
 
-	OrchController.orch.GetExpression(request.caldId)
+	expression := orchController.orch.GetExpression(request.CalcId)
+
+	if expression == "" {
+		http.Error(w, "Expression not found", http.StatusNotFound)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Your expression:"))
+	w.Write([]byte("Your expression: " + expression))
 }
 
-func (OrchController *OrchController) PrintExpressionByApi(w http.ResponseWriter, r *http.Request) {
+func (orchController *OrchController) PrintExpressionByApi(w http.ResponseWriter, r *http.Request) {
 
 	var request ExpressionRequest
 	err := json.NewDecoder(r.Body).Decode(&request)
@@ -65,7 +69,7 @@ func (OrchController *OrchController) PrintExpressionByApi(w http.ResponseWriter
 		return
 	}
 
-	OrchController.orch.PrintExpressions()
+	orchController.orch.PrintExpressions()
 
 	w.WriteHeader(http.StatusOK)
 }

@@ -5,6 +5,7 @@ func main() {
 	var databasePath = "../sqlite_db/sqlite.db"
 	InitUserDB(databasePath)
 	InitOrchDB(databasePath)
+	InitAgentsDB(databasePath)
 
 	var orchRepo *OrchRepository = NewOrchRepository(databasePath)
 	var orch *Orchestrator = NewOrchestrator(orchRepo)

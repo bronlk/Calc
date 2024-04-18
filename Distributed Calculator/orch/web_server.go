@@ -55,7 +55,7 @@ func NewWebServer(address string, userController *UserController, orchController
 	//rt.HandleFunc("/list_agents", orchServer.listAgents)
 	//rt.HandleFunc("/list_calc", orchServer.list)
 	rt.HandleFunc("/save_expression", orchController.AddExpressionByApi)
-	rt.HandleFunc("/get_exoression", orchController.GetExpressionByApi)
+	rt.HandleFunc("/get_expression", orchController.GetExpressionByApi)
 	rt.HandleFunc("/list_exoression", orchController.PrintExpressionByApi)
 
 	return orchServer

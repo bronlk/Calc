@@ -35,18 +35,17 @@ func NewOrchestrator(orchRepo *OrchRepository) *Orchestrator {
 }
 
 func (orch *Orchestrator) SaveToDatabase(expression string) {
-	orch.SaveExpression(expression)
+	orch.orchRepo.SaveExpression(expression)
 
 	fmt.Print("Saved successfully")
 }
 
-func (orch *Orchestrator) GetExpression(calcId string) {
-	err, _ := orch.GetExpressionByAgent(calcId)
+func (orch *Orchestrator) GetExpression(calcId string) Expression {
+	err, _ := orch.orchRepo.GetExpressionByAgent(calcId)
 	if err != false {
-		fmt.Print("Saved successfully")
+		fmt.Print("Error while finding expression")
 		return
 	}
-	fmt.Print("Saved successfully")
 }
 
 func (orch *Orchestrator) SetResult(exp Expression) string {
