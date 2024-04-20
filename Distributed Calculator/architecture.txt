@@ -1,6 +1,0 @@
-user/
-    login
-    register
-    logout
-
-calc/
