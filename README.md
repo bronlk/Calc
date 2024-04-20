@@ -20,6 +20,13 @@ curl -X POST http://localhost:8090/list_agents //выводит все рабо�
 
 curl -X POST http://localhost:8090/list_expressions //выводит все примеры
 
+curl -X POST http://localhost:8080/register -H "Content-Type: application/json" -d '{"login": "te123st123user", "password": "testpassword"}'
+
+curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d '{"login": "te123st123user", "password": "testpassword"}'
+
+curl -X POST http://localhost:8080/logout -H "Content-Type: application/json" -d '{"token": "ваш jwt токен"}'
+
+
 Ограничения:
 Калькулятор не умеет вычислять сложные выражения больше - 2х чисел
 ![Снимок экрана от 2024-02-22-14-38-11](https://github.com/IvanK09/sprint2final_proj/assets/71665828/14531f97-a0ae-44ee-bfc0-c31553f92e69)
