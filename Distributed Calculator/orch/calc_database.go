@@ -29,9 +29,11 @@ func InitOrchDB(fileName string) error {
 	expressions := `
 	CREATE TABLE "expressions" (
 		"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+		"login"	TEXT,
 		"expression"	TEXT,
 		"result"	TEXT,
-		"status"	TEXT
+		"status"	TEXT,
+		"calcid"	TEXT
 	);
 `
 	db.Exec(expressions)
@@ -71,11 +73,10 @@ func InitAgentsDB(fileName string) *OrchRepository {
 // 	return nil
 // }
 
-func (orchRepo *OrchRepository) SaveExpression(expression string) string {
+func (orchRepo *OrchRepository) SaveExpression(expression Expression) string {
 	db, err := openDbConnection(orchRepo.fileName)
 	defer db.Close()
-	//	var exp *Expression
-	_, err = db.Exec("INSERT INTO expressions(expression, result, status) VALUES(?, '', 'New')", expression)
+	_, err = db.Exec("INSERT INTO expressions(login, expression, result, status) VALUES(?, ?, ?, ?, null)", expression.Login, expression.Expression, expression.Result, expression.Status)
 	if err != nil {
 		fmt.Println("Error inserting new expression into database:", err)
 		return ""
@@ -90,36 +91,36 @@ func (orchRepo *OrchRepository) SaveExpression(expression string) string {
 	return ""
 }
 
-func (orchRepo *OrchRepository) GetExpressionByAgent(calcId string) (bool, *Expression) {
+func (orchRepo *OrchRepository) ObtainExpressionForCalc(agentId string) (*Expression, error) {
 	var expr Expression
 	var agent CalcAgent
 
 	db, err := openDbConnection(orchRepo.fileName)
 	defer db.Close()
 
-	row := db.QueryRow("SELECT expr_id, status FROM agents WHERE name = ?", calcId)
+	row := db.QueryRow("SELECT expr_id, status FROM agents WHERE name = ?", agentId)
 	//err := row.Scan(&agent.ExprId, &expr.Status)
 	if err != nil {
-		return false, nil
+		return nil, err
 	}
 
 	row = db.QueryRow("SELECT id, expression, result FROM expressions WHERE id = ?", agent.ExprId)
 	err = row.Scan(&expr.Id, &expr.Expression, &expr.Result)
 	if err != nil {
-		return false, nil
+		return nil, err
 	}
 
-	_, err = db.Exec("UPDATE expressions SET status = ? WHERE id = ?", "In calc:"+calcId, expr.Id)
+	_, err = db.Exec("UPDATE expressions SET status = ? WHERE id = ?", "In calc:"+agentId, expr.Id)
 	if err != nil {
 		fmt.Println("Error updating expression status in database:", err)
 	}
 
-	_, err = db.Exec("UPDATE agents SET last_connect = ? WHERE name = ?", time.Now(), calcId)
+	_, err = db.Exec("UPDATE agents SET last_connect = ? WHERE name = ?", time.Now(), agentId)
 	if err != nil {
 		fmt.Println("Error updating agent last connect time in database:", err)
 	}
 
-	return true, &expr
+	return &expr, nil
 }
 
 func (orch *Orchestrator) SetResultByID(exp *Expression) string {

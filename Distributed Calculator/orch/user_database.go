@@ -29,11 +29,11 @@ func InitUserDB(fileName string) error {
 	defer db.Close()
 	users := `
 	CREATE TABLE IF NOT EXISTS users (
-		"id"			INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
-		"login"			TEXT NOT NULL UNIQUE,
+		"id"					INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+		"login"				TEXT NOT NULL UNIQUE,
 		"password"		TEXT,
-		"jwtkey"		TEXT,
-		"active"		INTEGER		
+		"jwtkey"			TEXT,
+		"active"			INTEGER
 	);
 `
 	db.Exec(users)

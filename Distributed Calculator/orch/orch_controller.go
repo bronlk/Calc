@@ -9,25 +9,30 @@ type OrchController struct {
 	httpServer *http.Server
 	// ctx        context.Context
 	// cancelFunc context.CancelFunc
-	orch *Orchestrator
+	orch        *Orchestrator
+	userManager *UserManager
 
 	// orch
 }
 
 type ExpressionRequest struct {
 	Expression string
-	CalcId     string
+	Token      string
 }
 
-func NewOrchestatorController(orch *Orchestrator) *OrchController {
-	return &OrchController{orch: orch}
+type ExpressionCalcRequest struct {
+	CalcId string
+}
+
+func NewOrchestratorController(orch *Orchestrator, userManager *UserManager) *OrchController {
+	return &OrchController{orch: orch, userManager: userManager}
 }
 
 // func GetExpressionByApi(userManager *UserManager) *UserController {
 // 	return &UserController{userManager: userManager}
 // }
 
-func (OrchController *OrchController) AddExpressionByApi(w http.ResponseWriter, r *http.Request) {
+func (c *OrchController) AddExpressionByApi(w http.ResponseWriter, r *http.Request) {
 
 	var request ExpressionRequest
 	err := json.NewDecoder(r.Body).Decode(&request)
@@ -36,28 +41,38 @@ func (OrchController *OrchController) AddExpressionByApi(w http.ResponseWriter, 
 		return
 	}
 
-	OrchController.orch.SaveToDatabase(request.Expression)
+	login, err := c.userManager.checkJwt(request.Token)
+
+	if err != nil {
+		http.Error(w, "", http.StatusUnauthorized)
+		return
+	}
+
+	var expr = Expression{Id: -1, Login: login, Expression: request.Expression, Result: "", Status: "New"}
+	c.orch.Add(expr)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Expression saved successfully"))
 }
+
+// вызывается клькулятором
 func (orchController *OrchController) GetExpressionByApi(w http.ResponseWriter, r *http.Request) {
-	var request ExpressionRequest
+	var request ExpressionCalcRequest
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
-	expression := orchController.orch.GetExpression(request.CalcId)
+	expression, err := orchController.orch.GetExpressionForCalc(request.CalcId)
 
-	if expression == "" {
+	if err != nil {
 		http.Error(w, "Expression not found", http.StatusNotFound)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Your expression: " + expression))
+	w.Write([]byte("Your expression: " + expression.Expression))
 }
 
 func (orchController *OrchController) PrintExpressionByApi(w http.ResponseWriter, r *http.Request) {

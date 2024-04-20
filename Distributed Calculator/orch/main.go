@@ -7,12 +7,14 @@ func main() {
 	InitOrchDB(databasePath)
 	InitAgentsDB(databasePath)
 
-	var orchRepo *OrchRepository = NewOrchRepository(databasePath)
-	var orch *Orchestrator = NewOrchestrator(orchRepo)
-	var orchController *OrchController = NewOrchestatorController(orch)
-
 	var userRepo *UserRepository = NewUserRepository(databasePath)
 	var manager *UserManager = NewUserManager(userRepo)
+
+	var orchRepo *OrchRepository = NewOrchRepository(databasePath)
+	var orch *Orchestrator = NewOrchestrator(orchRepo)
+	var orchController *OrchController = NewOrchestratorController(orch, manager)
+
+
 	var userController *UserController = NewUserController(manager)
 
 	var server *WebServer = NewWebServer(":8080", userController, orchController)

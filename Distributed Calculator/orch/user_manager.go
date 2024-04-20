@@ -60,6 +60,60 @@ func (userManager *UserManager) LoginUser(login, password string) error {
 	return nil
 }
 
+func (userManager *UserManager) Logout(tokenString string) error {
+
+	login, err := userManager.checkJwt(tokenString)
+
+	userManager.userRepo.UserTokenClear(login)
+	return err
+}
+
+func (userManager *UserManager) checkJwt(tokenString string) (string, error) {
+	key := []byte("0")
+	// parse jwt token
+	// get login
+	// userRepo.UserTokenGet(login)
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return key, nil
+	})
+	if err != nil {
+		return "", err
+	}
+	// Проверяем, что токен валиден
+	if !token.Valid {
+		return "", fmt.Errorf("Token is not valid")
+	}
+	// Извлекаем login из содержимого токена
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", fmt.Errorf("Failed to parse claims")
+	}
+	login, ok := claims["login"].(string)
+	if !ok {
+		return "", fmt.Errorf("Login not found in claims")
+	}
+	return login, nil
+}
+
+// token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+// 	return []byte("0"), nil
+// })
+// if err != nil {
+// 	return "", err
+// }
+// if token.Valid {
+// 	claims := token.Claims.(jwt.MapClaims)
+// 	login := claims["login"].(string)
+// 	// Проверка токена с базой данных
+// 	var savedLogin string
+// 	err := db.QueryRow("SELECT login FROM users WHERE login = ?", login).Scan(&savedLogin)
+// 	if err != nil {
+// 		return "", errors.New("User not found")
+// 	}
+// 	if savedLogin != login {
+// 		return "", errors.New("Invalid login")
+// 	}
+// 	return login, nil
 // err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 // if err != nil {
 // 	return errors.New("Invalid password")
@@ -123,58 +177,3 @@ func (userManager *UserManager) LoginUser(login, password string) error {
 // 	}
 // 	fmt.Println("Login found in token:", login)
 // }
-
-func (userManager *UserManager) Logout(tokenString string) error {
-
-	login, err := userManager.checkJwt(tokenString)
-
-	userManager.userRepo.UserTokenClear(login)
-	return err
-}
-
-func (userManager *UserManager) checkJwt(tokenString string) (string, error) {
-	key := []byte("0")
-	// parse jwt token
-	// get login
-	// userRepo.UserTokenGet(login)
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return key, nil
-	})
-	if err != nil {
-		return "", err
-	}
-	// Проверяем, что токен валиден
-	if !token.Valid {
-		return "", fmt.Errorf("Token is not valid")
-	}
-	// Извлекаем login из содержимого токена
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return "", fmt.Errorf("Failed to parse claims")
-	}
-	login, ok := claims["login"].(string)
-	if !ok {
-		return "", fmt.Errorf("Login not found in claims")
-	}
-	return login, nil
-}
-
-// token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-// 	return []byte("0"), nil
-// })
-// if err != nil {
-// 	return "", err
-// }
-// if token.Valid {
-// 	claims := token.Claims.(jwt.MapClaims)
-// 	login := claims["login"].(string)
-// 	// Проверка токена с базой данных
-// 	var savedLogin string
-// 	err := db.QueryRow("SELECT login FROM users WHERE login = ?", login).Scan(&savedLogin)
-// 	if err != nil {
-// 		return "", errors.New("User not found")
-// 	}
-// 	if savedLogin != login {
-// 		return "", errors.New("Invalid login")
-// 	}
-// 	return login, nil
