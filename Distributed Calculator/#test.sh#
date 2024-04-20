@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Регистрация пользователя
+curl -X POST http://localhost:8080/reg -H "Content-Type: application/json" -d '{"login": "testus123123123er", "password": "testpassword"}'
+
+# Логин пользователя
+curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d '{"login": "testuser", "password": "testpassword"}'
+
+# Выход пользователя (логаут)
+curl -X POST http://localhost:8080/logout -H "Content-Type: application/json" -d '{"login": "testuser"}'
+
+

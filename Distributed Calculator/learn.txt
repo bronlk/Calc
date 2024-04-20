@@ -1,0 +1,3 @@
+1. что такое open api спецификаия
+2. как работают чанелы в го
+3. паттерн MVC (задача со звездочкой MVP twisting the triad, GUI architectures (fowler))
