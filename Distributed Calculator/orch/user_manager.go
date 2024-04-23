@@ -35,11 +35,11 @@ func (userManager *UserManager) RegisterUser(login, password string) error {
 	return err
 }
 
-func (userManager *UserManager) LoginUser(login, password string) error {
+func (userManager *UserManager) LoginUser(login, password string) (string, error) {
 	user, err := userManager.userRepo.SelectUserByLogin(login)
 
 	if user.Password != password {
-		return errors.New("Invalid password")
+		return "", errors.New("Invalid password")
 	}
 
 	claims := jwt.MapClaims{
@@ -50,14 +50,15 @@ func (userManager *UserManager) LoginUser(login, password string) error {
 	key := []byte("0")
 	tokenString, err := token.SignedString(key)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = userManager.userRepo.UserTokenSet(user.ID, tokenString)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+
+	return tokenString, nil
 }
 
 func (userManager *UserManager) Logout(tokenString string) error {

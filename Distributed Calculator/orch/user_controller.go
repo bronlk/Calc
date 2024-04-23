@@ -55,13 +55,13 @@ func (ctrl *UserController) LoginApiRequest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = ctrl.userManager.LoginUser(request.Login, request.Password)
+	tokenStr, err := ctrl.userManager.LoginUser(request.Login, request.Password)
 	if err != nil {
 		http.Error(w, "Failed to login", http.StatusUnauthorized)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Login credentials saved successfully"))
+	w.Write([]byte("Login credentials saved successfully. Token:" + tokenStr))
 }
 
 func (ctrl *UserController) LogoutApiRequest(w http.ResponseWriter, r *http.Request) {

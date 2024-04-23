@@ -197,7 +197,7 @@ func doCalc(id string, exp Expression, httpCl *http.Client) {
 }
 
 func main() {
-	name := "Calculator" // или name := os.Args[1] для аргумента командной строки
+	name := "calculator_" + strconv.FormatInt(time.Now().UnixNano(), 10) // или name := os.Args[1] для аргумента командной строки
 
 	fmt.Println("Starting calc name:", name)
 

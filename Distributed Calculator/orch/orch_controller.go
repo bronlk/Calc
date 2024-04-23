@@ -44,7 +44,7 @@ func (c *OrchController) AddExpressionByApi(w http.ResponseWriter, r *http.Reque
 	login, err := c.userManager.checkJwt(request.Token)
 
 	if err != nil {
-		http.Error(w, "", http.StatusUnauthorized)
+		http.Error(w, "Вы не залогинены", http.StatusUnauthorized)
 		return
 	}
 
