@@ -6,6 +6,7 @@
                                       
 
 Что-бы добавить пример нужно:
+
 1) Зарегистрировать юзера ---- curl -X POST http://localhost:8080/register -H "Content-Type: application/json" -d '{"login": "te123st123user", "password": "testpassword"}' // логин должен быть уникальным
   
 2) Войти в юзера ---- curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d '{"login": "te123st123user", "password": "testpassword"}' // после логина в терминал напишется jwt token он нужен что бы добавить пример.
@@ -28,3 +29,5 @@
 Ограничения:
 Калькулятор не умеет вычислять сложные выражения больше - 2х чисел
 ![image](https://github.com/bronlk/Calc/assets/71665828/ef15bf19-41b3-4bf1-9b69-2fad82b66c8c)
+
+![Снимок экрана от 2024-04-23-17-47-46](https://github.com/bronlk/Calc/assets/71665828/7bf68fb8-cdf6-4a58-aa57-b388019a184e)
