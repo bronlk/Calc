@@ -2,16 +2,18 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Expression struct {
@@ -22,21 +24,15 @@ type Expression struct {
 }
 
 type ExpressionAgent struct {
-	address  string
 	clientId string
 	working  bool
-	client   *http.Client
 	wg       sync.WaitGroup
 }
 
-func NewExpressionAgent(address string, clientId string) *ExpressionAgent {
-	var client *http.Client = &http.Client{}
-
+func NewExpressionAgent(clientId string) *ExpressionAgent {
 	return &ExpressionAgent{
-		address:  address,
-		working:  false,
-		client:   client,
 		clientId: clientId,
+		working:  false,
 	}
 }
 
@@ -47,7 +43,6 @@ func (ea *ExpressionAgent) Start() {
 }
 
 func (ea *ExpressionAgent) StopTimeout(timeout time.Duration) error {
-
 	c := make(chan struct{})
 	go func() {
 		defer close(c)
@@ -57,7 +52,6 @@ func (ea *ExpressionAgent) StopTimeout(timeout time.Duration) error {
 	case <-c:
 		return nil
 	case <-time.After(timeout):
-
 		return errors.New("exit by timeout")
 	}
 }
@@ -69,34 +63,69 @@ func (ea *ExpressionAgent) Stop() {
 
 func (ea *ExpressionAgent) mainLoop() {
 	defer ea.wg.Done()
+
+	// Подключение к базе данных
+	db, err := sql.Open("sqlite3", "../sqlite_db/sqlite.db")
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
 	for ea.working {
-
-		resp, err := ea.client.Post("http://localhost:8080/get_expression", "application/json", bytes.NewBuffer([]byte(ea.clientId)))
-
+		// Обновление last_connect для агента
+		_, err = db.Exec("UPDATE agents SET last_connect = ? WHERE name = ?", time.Now(), ea.clientId)
 		if err != nil {
-			time.Sleep(30 * time.Millisecond)
+			fmt.Println("Ошибка при обновлении last_connect:", err)
+			continue // Пропускаем итерацию при ошибке
+		}
+
+		// Запрос на получение необработанного выражения
+		row := db.QueryRow("SELECT id, expression FROM expressions WHERE result IS '' LIMIT 1")
+
+		var id int
+		var expression string
+		err = row.Scan(&id, &expression)
+		if err == sql.ErrNoRows {
+			// Нет необработанных выражений, ждем 2 секунды
+			time.Sleep(2 * time.Second)
+			continue
+		} else if err != nil {
+			fmt.Println("Ошибка при запросе:", err)
+			continue // Пропускаем итерацию при ошибке
+		}
+
+		// Вычисление выражения
+		result, err := calculate(expression)
+		if err != nil {
+			fmt.Println("Ошибка вычисления:", err)
+			continue // Пропускаем итерацию при ошибке
+		}
+
+		// Обновление записи в базе данных (expressions и agents)
+		tx, err := db.Begin() // Начинаем транзакцию
+		if err != nil {
+			fmt.Println("Ошибка при начале транзакции:", err)
+			continue // Пропускаем итерацию при ошибке
+		}
+		_, err = tx.Exec("UPDATE expressions SET result = ? WHERE id = ?", result, id)
+		if err != nil {
+			fmt.Println("Ошибка при обновлении выражения:", err)
+			tx.Rollback() // Откатываем транзакцию при ошибке
+			continue      // Пропускаем итерацию при ошибке
+		}
+		_, err = tx.Exec("UPDATE agents SET expr_id = ? WHERE name = ?", id, ea.clientId)
+		if err != nil {
+			fmt.Println("Ошибка при обновлении агента:", err)
+			tx.Rollback() // Откатываем транзакцию при ошибке
+			continue      // Пропускаем итерацию при ошибке
+		}
+		err = tx.Commit() // Коммитим транзакцию
+		if err != nil {
+			fmt.Println("Ошибка при коммите транзакции:", err)
 			continue
 		}
 
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			continue
-		}
-
-		if len(bodyBytes) > 0 {
-
-			var expr Expression
-			err := json.Unmarshal(bodyBytes, &expr)
-			if err == nil {
-				doCalc(ea.clientId, expr, ea.client)
-
-				time.Sleep(3000 * time.Millisecond)
-			}
-		}
-
-		//		bodyString := string(bodyBytes)
-
-		time.Sleep(2000 * time.Millisecond)
+		fmt.Println("Выражение вычислено:", expression, "=", result)
 	}
 }
 
@@ -168,12 +197,26 @@ func doCalc(id string, exp Expression, httpCl *http.Client) {
 }
 
 func main() {
+	name := "Calculator" // или name := os.Args[1] для аргумента командной строки
 
-	name := os.Args[1]
+	fmt.Println("Starting calc name:", name)
 
-	fmt.Println("Starting calc name:" + name)
+	// Подключение к базе данных
+	db, err := sql.Open("sqlite3", "../sqlite_db/sqlite.db")
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
 
-	var agent *ExpressionAgent = NewExpressionAgent("http://localhost:8080", name)
+	// Создание таблиц, если они не существуют
+
+	// Добавление агента в базу данных
+	_, err = db.Exec("INSERT INTO agents (name, last_connect) VALUES (?, ?)", name, time.Now())
+	if err != nil {
+		fmt.Println("Ошибка при добавлении агента:", err)
+	}
+
+	var agent *ExpressionAgent = NewExpressionAgent(name)
 	agent.Start()
 
 	fmt.Printf("Press Enter to stop")
@@ -182,5 +225,4 @@ func main() {
 
 	agent.Stop()
 	fmt.Println("Stopped")
-
 }

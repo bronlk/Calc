@@ -29,11 +29,11 @@ func InitOrchDB(fileName string) error {
 	expressions := `
 	CREATE TABLE "expressions" (
 		"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
-		"login"	TEXT,
+		"login"			TEXT,
 		"expression"	TEXT,
-		"result"	TEXT,
-		"status"	TEXT,
-		"calcid"	TEXT
+		"result"		INTEGER,
+		"status"		TEXT,
+		"calcid"		TEXT
 	);
 `
 	db.Exec(expressions)
@@ -76,7 +76,7 @@ func InitAgentsDB(fileName string) *OrchRepository {
 func (orchRepo *OrchRepository) SaveExpression(expression Expression) string {
 	db, err := openDbConnection(orchRepo.fileName)
 	defer db.Close()
-	_, err = db.Exec("INSERT INTO expressions(login, expression, result, status) VALUES(?, ?, ?, ?, null)", expression.Login, expression.Expression, expression.Result, expression.Status)
+	_, err = db.Exec("INSERT INTO expressions(login, expression, result, status) VALUES(?, ?, ?, ?)", expression.Login, expression.Expression, expression.Result, expression.Status)
 	if err != nil {
 		fmt.Println("Error inserting new expression into database:", err)
 		return ""
@@ -103,6 +103,10 @@ func (orchRepo *OrchRepository) ObtainExpressionForCalc(agentId string) (*Expres
 	if err != nil {
 		return nil, err
 	}
+
+	//UPDATE expressions set status='yesyes' where calcid is null returning *;
+	//row = db.QueryRow("SELECT id, expression, result FROM expressions WHERE calcid is null LIMIT 1,)
+	// дальше проставить статус и calcid по expression id
 
 	row = db.QueryRow("SELECT id, expression, result FROM expressions WHERE id = ?", agent.ExprId)
 	err = row.Scan(&expr.Id, &expr.Expression, &expr.Result)

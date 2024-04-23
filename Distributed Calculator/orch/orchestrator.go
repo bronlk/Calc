@@ -42,10 +42,18 @@ func (orch *Orchestrator) Add(expression Expression) {
 }
 
 func (orch *Orchestrator) GetExpressionForCalc(calcId string) (*Expression, error) {
+
+	//mapSync
+
+	// получить expression
+	// set calcid and state to Calculating for  expression
+
 	exp, err := orch.orchRepo.ObtainExpressionForCalc(calcId)
-	if err !=nil {
+
+	if err != nil {
 		return nil, err
 	}
+
 	return exp, nil
 }
 
