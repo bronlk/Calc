@@ -8,7 +8,7 @@
 Что-бы добавить пример нужно:
 1) Зарегистрировать юзера ---- curl -X POST http://localhost:8080/register -H "Content-Type: application/json" -d '{"login": "te123st123user", "password": "testpassword"}' // логин должен быть уникальным
   
-2) Войти в юзера ---- curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d '{"login": "te123st123user", "password": "testpassword"}' // без логина вы не сможете добавить пример
+2) Войти в юзера ---- curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d '{"login": "te123st123user", "password": "testpassword"}' // после логина в терминал напишется jwt token он нужен что бы добавить пример.
 
 3) Добавить пример ----curl -X POST http://localhost:8080/save_expression -H "Content-Type: application/json" -d '{"expression": "2+4", "token": "сюда вы должны вставить ваш токен"}'
  //вы можете добавить любой пример,НО КАЛЬКУЛЯТОР УМЕЕТ РЕШАТЬ ТОЛЬКО ПРОСТЫЕ ПРИМЕРЫ т.е. примеры только из 2ух чисел
