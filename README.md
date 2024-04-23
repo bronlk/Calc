@@ -16,7 +16,7 @@
 
 Так же вы можете сделать следующие curl запросы:
 
-1) curl -X POST http://localhost:8090/list_expressions //выводит все примеры
+1) curl -X POST http://localhost:8080/list_expressions //выводит все примеры
 
 
 
