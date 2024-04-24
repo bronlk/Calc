@@ -31,3 +31,5 @@
 ![image](https://github.com/bronlk/Calc/assets/71665828/ef15bf19-41b3-4bf1-9b69-2fad82b66c8c)
 
 ![Снимок экрана от 2024-04-23-17-47-46](https://github.com/bronlk/Calc/assets/71665828/7bf68fb8-cdf6-4a58-aa57-b388019a184e)
+
+![Снимок экрана от 2024-04-24-10-19-31](https://github.com/bronlk/Calc/assets/71665828/3de72c57-59c5-4ab1-bd34-4708bf00f6f6)
